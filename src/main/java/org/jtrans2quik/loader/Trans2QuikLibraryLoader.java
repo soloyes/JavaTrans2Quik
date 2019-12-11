@@ -18,7 +18,6 @@ public final class Trans2QuikLibraryLoader {
     public static final Trans2QuikLibrary LIBRARY;
 
     static {
-        
         final Map<Object, Object> nameMapping = new HashMap<Object, Object>();
         nameMapping.put(Library.OPTION_FUNCTION_MAPPER, StdCallLibrary.FUNCTION_MAPPER);
         nameMapping.put(Library.OPTION_CALLING_CONVENTION, Function.C_CONVENTION);

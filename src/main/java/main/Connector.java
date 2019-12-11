@@ -48,7 +48,7 @@ public class Connector {
 	}
 
 	public void connectToQuik() {
-		logger.trace("connectToQuik");
+		logger.trace("connectToQuik()");
 		NativeLong returnCode = quikAdapter.TRANS2QUIK_CONNECT(pathToQuik, errorCode, buffer, buffer.length);
 		Status status = Status.decode(returnCode.intValue());
 
@@ -79,7 +79,7 @@ public class Connector {
 	}
 
 	public void disconnectFromQuik() {
-		logger.trace("disconnectFromQuik");
+		logger.trace("disconnectFromQuik()");
 		NativeLong returnCode = quikAdapter.TRANS2QUIK_DISCONNECT(errorCode, buffer, buffer.length);
 		Status status = Status.decode(returnCode.intValue());
 
@@ -100,7 +100,7 @@ public class Connector {
 	}
 
 	public void checkConnectionToServer() {
-		logger.trace("checkConnectionToServer");
+		logger.trace("checkConnectionToServer()");
 		NativeLong returnCode = quikAdapter.TRANS2QUIK_IS_QUIK_CONNECTED(errorCode, buffer, buffer.length);
 		Status status = Status.decode(returnCode.intValue());
 
@@ -121,7 +121,7 @@ public class Connector {
 	}
 
 	public void checkConnectionToQuik() {
-		logger.trace("checkConnectionToQuik");
+		logger.trace("checkConnectionToQuik()");
 		NativeLong returnCode = quikAdapter.TRANS2QUIK_IS_DLL_CONNECTED(errorCode, buffer, buffer.length);
 		Status status = Status.decode(returnCode.intValue());
 
@@ -139,13 +139,14 @@ public class Connector {
 	}
 
 	private void setConnectionCallBack() {
-		logger.trace("setConnectionCallBack");
+		logger.trace("setConnectionCallBack()");
 		connectionCallBackExecutor.execute(new Runnable() {
 			public void run() {
 				while (true) {
 					NativeLong returnCode = quikAdapter.TRANS2QUIK_SET_CONNECTION_STATUS_CALLBACK(
 						new Trans2QuikLibrary.ConnectionStatusCallback() {
 							public void callback(NativeLong nConnectionEvent, NativeLong nExtendedErrorCode, String lpcstrInfoMessage) {
+								logger.trace("ConnectionStatusCallback.callback()");
 								Status status = Status.decode(nConnectionEvent.intValue());
 								switch (status) {
 								case TRANS2QUIK_QUIK_CONNECTED:
@@ -176,7 +177,7 @@ public class Connector {
 						return;
 					case TRANS2QUIK_FAILED:
 						logger.error("The callback function could not be set. " + errorCode.getValue().intValue() + " " + Translator.byteToString(buffer));
-						waitingFor(1000);
+						break;
 					default:
 						logger.fatal(Status.UNKNOWN_VALUE + " " + returnCode.intValue());
 						System.exit(0);
@@ -184,6 +185,10 @@ public class Connector {
 				}
 			}
 		});
+	}
+
+	public void shutdwon() {
+		connectionCallBackExecutor.shutdownNow();
 	}
 
 	private void waitingFor(int time) {
