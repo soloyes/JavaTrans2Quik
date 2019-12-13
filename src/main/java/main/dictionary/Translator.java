@@ -1,4 +1,4 @@
-package main;
+package main.dictionary;
 
 public class Translator {
     public static String byteToString(byte[] array) {

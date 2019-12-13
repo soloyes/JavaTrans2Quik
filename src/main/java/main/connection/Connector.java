@@ -1,15 +1,15 @@
-package main;
+package main.connection;
 
 import com.sun.jna.NativeLong;
 import com.sun.jna.ptr.NativeLongByReference;
+import main.dictionary.Status;
+import main.dictionary.Translator;
+import main.eventbusImpl.CallBackConnectionEvent;
+import main.eventbusImpl.ConnectionEvent;
+import main.eventbusImpl.Bus;
 import org.apache.log4j.Logger;
 import org.jtrans2quik.loader.Trans2QuikLibraryLoader;
 import org.jtrans2quik.wrapper.Trans2QuikLibrary;
-
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class Connector {
 	private static Connector instance;
@@ -18,7 +18,6 @@ public class Connector {
 	private static byte[] buffer = new byte[255];
 	private static String pathToQuik = "C:\\SBERBANK\\QUIK\\";
 	private static Logger logger = Logger.getLogger(Connector.class);
-	private static ThreadPoolExecutor connectionCallBackExecutor;
 
 	private Connector() {
 	}
@@ -30,52 +29,45 @@ public class Connector {
 		return instance;
 	}
 
-	static {
-		connectionCallBackExecutor = new ThreadPoolExecutor(
-			1, 1, 0L,
-			TimeUnit.MILLISECONDS,
-			new SynchronousQueue<Runnable>(),
-			new RejectedExecutionHandler() {
-				public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-					logger.info("connectionCallBackExecutor is singleThreadPool");
+	public Runnable connectToQuik() {
+		return () -> {
+			try {
+				while (!Thread.currentThread().isInterrupted()) {
+					logger.trace("connectToQuik()");
+					NativeLong returnCode = quikAdapter.TRANS2QUIK_CONNECT(pathToQuik, errorCode, buffer, buffer.length);
+					Status status = Status.decode(returnCode.intValue());
+
+					switch (status) {
+					case TRANS2QUIK_SUCCESS:
+						logger.info("Connection to QUIK terminal established.");
+						Bus.getInstance().dispatch(new CallBackConnectionEvent());
+						return;
+					case TRANS2QUIK_FAILED:
+						logger.error("Connection to QUIK terminal failed. " + errorCode.getValue().intValue() + " " + Translator.byteToString(buffer));
+						break;
+					case TRANS2QUIK_QUIK_TERMINAL_NOT_FOUND:
+						logger.fatal("Either INFO.EXE is missing in the specified directory or the external transaction processing service is not running on it. Please check QUIK terminal.");
+						break;
+					case TRANS2QUIK_DLL_VERSION_NOT_SUPPORTED:
+						logger.error("The used version of Trans2QUIK.dll is not supported by the specified INFO.EXE.");
+
+//      		Documentation collision
+//				case TRANS2QUIK_DLL_ALREADY_CONNECTED_TO_QUIK:
+//				logger.warn("Connection to QUIK already established.");
+//				break;
+
+					default:
+						logger.fatal(Status.UNKNOWN_VALUE + " " + returnCode.intValue());
+						logger.info("Exit program");
+						System.exit(0);
+					}
+					Thread.sleep(1000);
 				}
+			} catch (InterruptedException e) {
+				logger.error(e.getMessage());
+				Thread.currentThread().interrupt();
 			}
-		);
-	}
-
-	{
-		setConnectionCallBack();
-	}
-
-	public void connectToQuik() {
-		logger.trace("connectToQuik()");
-		NativeLong returnCode = quikAdapter.TRANS2QUIK_CONNECT(pathToQuik, errorCode, buffer, buffer.length);
-		Status status = Status.decode(returnCode.intValue());
-
-		switch (status) {
-		case TRANS2QUIK_SUCCESS:
-			logger.info("Connection to QUIK terminal established.");
-			break;
-		case TRANS2QUIK_FAILED:
-			logger.error("Connection to QUIK terminal failed. " + errorCode.getValue().intValue() + " " + Translator.byteToString(buffer));
-			break;
-		case TRANS2QUIK_QUIK_TERMINAL_NOT_FOUND:
-			logger.fatal("Either INFO.EXE is missing in the specified directory or the external transaction processing service is not running on it. Please check QUIK terminal.");
-			System.exit(0);
-		case TRANS2QUIK_DLL_VERSION_NOT_SUPPORTED:
-			logger.error("The used version of Trans2QUIK.dll is not supported by the specified INFO.EXE.");
-			System.exit(0);
-			break;
-
-//      Documentation collision
-//		case TRANS2QUIK_DLL_ALREADY_CONNECTED_TO_QUIK:
-//			logger.warn("Connection to QUIK already established.");
-//			break;
-
-		default:
-			logger.fatal(Status.UNKNOWN_VALUE + " " + returnCode.intValue());
-			System.exit(0);
-		}
+		};
 	}
 
 	public void disconnectFromQuik() {
@@ -95,6 +87,7 @@ public class Connector {
 			break;
 		default:
 			logger.fatal(Status.UNKNOWN_VALUE + " " + returnCode.intValue());
+			logger.info("Exit program");
 			System.exit(0);
 		}
 	}
@@ -116,6 +109,7 @@ public class Connector {
 			break;
 		default:
 			logger.fatal(Status.UNKNOWN_VALUE + " " + returnCode.intValue());
+			logger.info("Exit program");
 			System.exit(0);
 		}
 	}
@@ -134,15 +128,16 @@ public class Connector {
 			break;
 		default:
 			logger.fatal(Status.UNKNOWN_VALUE + " " + returnCode.intValue());
+			logger.info("Exit program");
 			System.exit(0);
 		}
 	}
 
-	private void setConnectionCallBack() {
+	public Runnable setConnectionCallBack() {
 		logger.trace("setConnectionCallBack()");
-		connectionCallBackExecutor.execute(new Runnable() {
-			public void run() {
-				while (true) {
+		return () -> {
+			try {
+				while (!Thread.currentThread().isInterrupted()) {
 					NativeLong returnCode = quikAdapter.TRANS2QUIK_SET_CONNECTION_STATUS_CALLBACK(
 						new Trans2QuikLibrary.ConnectionStatusCallback() {
 							public void callback(NativeLong nConnectionEvent, NativeLong nExtendedErrorCode, String lpcstrInfoMessage) {
@@ -160,9 +155,11 @@ public class Connector {
 									break;
 								case TRANS2QUIK_DLL_DISCONNECTED:
 									logger.error("The connection between the Trans2QUIK.dll and the used QUIK terminal is broken.");
+									Bus.getInstance().dispatch(new ConnectionEvent());
 									break;
 								default:
 									logger.fatal(Status.UNKNOWN_VALUE + " " + nConnectionEvent.intValue());
+									logger.info("Exit program");
 									System.exit(0);
 								}
 							}
@@ -180,22 +177,15 @@ public class Connector {
 						break;
 					default:
 						logger.fatal(Status.UNKNOWN_VALUE + " " + returnCode.intValue());
+						logger.info("Exit program");
 						System.exit(0);
 					}
+					Thread.sleep(1000);
 				}
+			} catch (InterruptedException e) {
+				logger.error(e.getMessage());
+				Thread.currentThread().interrupt();
 			}
-		});
-	}
-
-	public void shutdwon() {
-		connectionCallBackExecutor.shutdownNow();
-	}
-
-	private void waitingFor(int time) {
-		try {
-			Thread.sleep(time);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		};
 	}
 }

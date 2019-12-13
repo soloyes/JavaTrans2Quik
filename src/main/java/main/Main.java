@@ -1,17 +1,30 @@
 package main;
 
+import main.eventbusImpl.CallBackSubscriber;
+import main.eventbusImpl.ConnectionEvent;
+import main.eventbusImpl.ConnectionSubscriber;
+import main.eventbusImpl.Bus;
+import org.apache.log4j.Logger;
+
 public class Main {
+	private static Logger logger = Logger.getLogger(Main.class);
+
 	public static void main(String[] args) {
+		Bus bus = Bus.getInstance();
+
+		bus.register(new CallBackSubscriber());
+		bus.register(new ConnectionSubscriber());
+
+		bus.dispatch(new ConnectionEvent());
+
 		try {
-			Connector.getInstance().connectToQuik();
-
-			Thread.sleep(1000);
-			Connector.getInstance().disconnectFromQuik();
-
+			Thread.sleep(Configuration.getLong("main.thread.ti1meout"));
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		} finally {
-			Connector.getInstance().shutdwon();
+			logger.info("Graceful stop");
+			bus.stop();
 		}
+
 	}
 }

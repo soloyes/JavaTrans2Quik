@@ -1,4 +1,4 @@
-package main;
+package main.dictionary;
 
 import lombok.Getter;
 
