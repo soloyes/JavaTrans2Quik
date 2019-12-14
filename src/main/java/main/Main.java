@@ -1,8 +1,9 @@
 package main;
 
-import main.eventbusImpl.CallBackSubscriber;
-import main.eventbusImpl.ConnectionEvent;
-import main.eventbusImpl.ConnectionSubscriber;
+import main.eventbusImpl.events.DisconnectionEvent;
+import main.eventbusImpl.subscribers.CallBackSubscriber;
+import main.eventbusImpl.events.ConnectionEvent;
+import main.eventbusImpl.subscribers.ConnectionSubscriber;
 import main.eventbusImpl.Bus;
 import org.apache.log4j.Logger;
 
@@ -18,11 +19,21 @@ public class Main {
 		bus.dispatch(new ConnectionEvent());
 
 		try {
-			Thread.sleep(Configuration.getLong("main.thread.ti1meout"));
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			logger.error(e.getMessage());
+		}
+
+		bus.dispatch(new DisconnectionEvent());
+
+
+		try {
+			Thread.sleep(Configuration.getLong("main.thread.timeout"));
 		} catch (InterruptedException e) {
 			logger.error(e.getMessage());
 		} finally {
 			logger.info("Graceful stop");
+
 			bus.stop();
 		}
 

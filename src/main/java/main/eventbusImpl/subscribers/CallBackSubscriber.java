@@ -1,14 +1,14 @@
-package main.eventbusImpl;
+package main.eventbusImpl.subscribers;
 
 import main.connection.Connector;
 import main.connection.Pool;
 import main.eventbus.Event;
 import main.eventbus.Subscribable;
+import main.eventbusImpl.events.CallBackConnectionEvent;
 import org.apache.log4j.Logger;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -25,12 +25,8 @@ public class CallBackSubscriber implements Subscribable, Pool {
 		callBackConnectionExecutor = new ThreadPoolExecutor(
 			1, 1, 0L,
 			TimeUnit.MILLISECONDS,
-			new SynchronousQueue<Runnable>(),
-			new RejectedExecutionHandler() {
-				public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-					logger.info("callBackConnectionExecutor is singleThreadPool");
-				}
-			}
+			new SynchronousQueue<>(),
+			(r, executor) -> logger.info("Incoming thread. But callBackConnectionExecutor is singleThreadPool. Drop from queue.")
 		);
 	}
 

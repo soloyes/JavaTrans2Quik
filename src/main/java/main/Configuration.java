@@ -33,6 +33,11 @@ public class Configuration {
 		return value;
 	}
 
+	public static String getString(String key) {
+		checkValue(key);
+		return properties.getProperty(key);
+	}
+
 	private static void checkValue(String key) {
 		if (properties.getProperty(key) == null) {
 			throw new IllegalArgumentException("There is no property " + key);
