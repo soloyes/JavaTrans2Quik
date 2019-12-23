@@ -8,9 +8,10 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class Configuration {
-	private static Logger logger = Logger.getLogger(Configuration.class);
 	private static Configuration instance = new Configuration();
 	private static Properties properties;
+
+	private static Logger logger = Logger.getLogger(Configuration.class);
 
 	private Configuration() {
 		properties = new Properties();
@@ -38,9 +39,15 @@ public class Configuration {
 		return properties.getProperty(key);
 	}
 
+	public static boolean getBoolean(String key) {
+		checkValue(key);
+		return Boolean.valueOf(properties.getProperty(key));
+	}
+
 	private static void checkValue(String key) {
 		if (properties.getProperty(key) == null) {
-			throw new IllegalArgumentException("There is no property " + key);
+			logger.error("There is no property " + key, new IllegalArgumentException());
+			System.exit(0);
 		}
 	}
 }

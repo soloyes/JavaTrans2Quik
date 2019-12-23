@@ -65,7 +65,7 @@ public class Connector {
 					Thread.sleep(Configuration.getLong("heartbeat.thread.timeout"));
 				}
 			} catch (InterruptedException e) {
-				logger.error(e.getMessage());
+				logger.error("", e);
 				Thread.currentThread().interrupt();
 			}
 		};
@@ -98,7 +98,7 @@ public class Connector {
 					Thread.sleep(Configuration.getLong("heartbeat.thread.timeout"));
 				}
 			} catch (InterruptedException e) {
-				logger.error(e.getMessage());
+				logger.error("", e);
 				Thread.currentThread().interrupt();
 			}
 		};
@@ -195,7 +195,7 @@ public class Connector {
 					Thread.sleep(Configuration.getLong("heartbeat.thread.timeout"));
 				}
 			} catch (InterruptedException e) {
-				logger.error(e.getMessage());
+				logger.error("", e);
 				Thread.currentThread().interrupt();
 			}
 		};
