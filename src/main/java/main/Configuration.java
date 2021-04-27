@@ -16,7 +16,7 @@ public class Configuration {
 	private Configuration() {
 		properties = new Properties();
 		try {
-			properties.load(new FileInputStream(new File("app.properties")));
+			properties.load(new FileInputStream(new File("C:\\Users\\zheny\\IdeaProjects\\JavaTrans2Quik\\src\\main\\resources\\app.properties")));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
