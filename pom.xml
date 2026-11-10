@@ -21,6 +21,14 @@
 		plus a small connector service on top of it: reconnecting connection to the terminal and a stream
 		of the account's own orders and trades.
 	</description>
+
+	<!-- MIT covers the quik-bridge code (io.github.soloyes). The org.jtrans2quik wrapper is upstream code without a licence. -->
+	<licenses>
+		<license>
+			<name>MIT License (quik-bridge code only)</name>
+			<url>https://opensource.org/licenses/MIT</url>
+		</license>
+	</licenses>
 	<url>https://github.com/soloyes/JavaTrans2Quik</url>
 
 	<developers>

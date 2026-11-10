@@ -197,6 +197,6 @@ return codes) is described in [docs/WRAPPER.md](docs/WRAPPER.md), translated fro
 - quik-bridge: Vitalii Solovev ([soloyes](https://github.com/soloyes)).
 - QUIK, Trans2Quik.dll and their documentation belong to ARQA Technologies.
 
-The upstream repository has no licence file, and this fork does not invent one for the upstream code: its
-author has not stated reuse terms, so ask him before reusing the wrapper beyond what GitHub's terms allow.
-The fork has no licence file of its own yet either.
+quik-bridge (everything under `io.github.soloyes`, the tests, docs and build files) is under the
+[MIT License](LICENSE). The JNA wrapper in `org.jtrans2quik` is not: the upstream repository has no licence,
+so its author keeps all rights to it. Ask him before reusing the wrapper beyond what GitHub's terms allow.
