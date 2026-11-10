@@ -13,7 +13,7 @@ public interface Trans2QuikLibrary extends StdCallLibrary {
     
     /*
     * Java Native Access (JNA) overview: 
-    * https://jna.java.net/javadoc/overview-summary.html
+    * https://github.com/java-native-access/jna
     */
 
     /**
@@ -50,6 +50,30 @@ public interface Trans2QuikLibrary extends StdCallLibrary {
                 NativeLong nIsSell,
                 NativeLong nStatus,
                 NativeLong nOrderDescriptor
+        );
+    }
+
+    /**
+     * Added in the soloyes fork: upstream declared TRANS2QUIK_START_TRADES but had no typed callback for it.
+     * Signature as in trans2quik_api.h shipped with Trans2QuikAPI 1.2.
+     *
+     * typedef void (__stdcall *TRANS2QUIK_TRADE_STATUS_CALLBACK)
+     * (long nMode, double dNumber, double dOrderNumber, LPCSTR ClassCode,
+     * LPCSTR SecCode, double dPrice, long nQty, double dValue,
+     * long nIsSell, long nTradeDescriptor);
+     */
+    public interface TradeStatusCallback extends StdCallCallback {
+        void callback(
+                NativeLong nMode,
+                double dNumber,
+                double dOrderNumber,
+                String classCode,
+                String secCode,
+                double dPrice,
+                NativeLong nQty,
+                double dValue,
+                NativeLong nIsSell,
+                NativeLong nTradeDescriptor
         );
     }
 

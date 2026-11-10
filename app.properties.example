@@ -1,0 +1,31 @@
+# quik-bridge configuration. Copy to app.properties next to the jar, or pass the path as the first argument.
+# The file is read as UTF-8. In .properties files a backslash must be doubled.
+
+# Folder of the QUIK terminal (the one with info.exe). No quotes needed.
+quik.path=C:\\QUIK
+
+# Pause between TRANS2QUIK_CONNECT attempts, ms.
+reconnect.interval.ms=1000
+# Give up (exit code 1) after this many failed attempts in a row. 0 = retry forever.
+reconnect.max.attempts=0
+# How often to poll TRANS2QUIK_IS_DLL_CONNECTED / _IS_QUIK_CONNECTED, ms. 0 = rely on the status callback only.
+heartbeat.interval.ms=5000
+# Stop after this many ms. 0 = run until Ctrl+C / service stop.
+run.duration.ms=0
+
+# What to receive: the account's own orders and/or trades (fills).
+subscribe.orders=true
+subscribe.trades=true
+
+# Either everything...
+#   subscription.all=true
+#   subscription.all.sec.codes=          (optional instrument filter, comma-separated; empty = all)
+subscription.all=false
+
+# ...or named bundles. Each bundle is one class code plus optional instrument codes.
+subscription.names=shares,futures
+subscription.class.code.shares=TQBR
+subscription.sec.codes.shares=LKOH,GAZP,SBER
+subscription.class.code.futures=SPBFUT
+# no sec codes = the whole class
+subscription.sec.codes.futures=

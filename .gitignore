@@ -1,4 +1,6 @@
 .idea/
 *.iml
 /target/
-*.log
+*.log/app.properties
+/logs/
+*.dll
