@@ -130,6 +130,14 @@ public final class ConnectionSubscriber extends ExecutorSubscriber {
 		} finally {
 			connecting.set(false);
 		}
+		// A DLL_DISCONNECTED that arrived between the stale check above and connecting=false was dropped
+		// by requestConnect (a loop was still running). Without this re-check only the heartbeat would notice.
+		if (disconnectedWhileConnecting.get() && !connector.isDllConnected()) {
+			log.warn("Terminal dropped the DLL right after connecting, retrying");
+			state.set(ConnectionState.DLL_DISCONNECTED);
+			requestConnect("DLL disconnected right after connect");
+			return;
+		}
 		bus.dispatch(new DllConnected(quikPath));
 	}
 }
