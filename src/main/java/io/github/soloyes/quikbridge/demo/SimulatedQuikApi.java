@@ -1,4 +1,4 @@
-package io.github.soloyes.quikbridge;
+package io.github.soloyes.quikbridge.demo;
 
 import io.github.soloyes.quikbridge.api.CallResult;
 import io.github.soloyes.quikbridge.api.OrderUpdate;
@@ -13,10 +13,11 @@ import java.util.Deque;
 import java.util.List;
 
 /**
- * In-memory stand-in for TRANS2QUIK.dll. Scripts connect results, records every call and lets tests
- * fire the callbacks the DLL would fire.
+ * In-memory stand-in for TRANS2QUIK.dll: scripts connect results, records every call and lets the caller
+ * fire the callbacks the DLL would fire. The test suite runs the bridge against it, and so does
+ * {@code --demo} ({@link Demo}). It never touches JNA, so it works on any OS.
  */
-public final class FakeQuikApi implements QuikApi {
+public final class SimulatedQuikApi implements QuikApi {
 	public final List<String> calls = Collections.synchronizedList(new ArrayList<>());
 	private final Deque<CallResult> connectResults = new ArrayDeque<>();
 	private volatile boolean dllConnected;
@@ -26,12 +27,12 @@ public final class FakeQuikApi implements QuikApi {
 	private volatile TradeListener tradeListener;
 
 	/** Results returned by the next connect() calls; after they run out, connect() succeeds. */
-	public FakeQuikApi scriptConnect(CallResult... results) {
+	public SimulatedQuikApi scriptConnect(CallResult... results) {
 		Collections.addAll(connectResults, results);
 		return this;
 	}
 
-	public FakeQuikApi serverConnected(boolean v) {
+	public SimulatedQuikApi serverConnected(boolean v) {
 		serverConnected = v;
 		return this;
 	}

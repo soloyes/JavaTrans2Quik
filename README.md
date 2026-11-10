@@ -2,20 +2,20 @@
 
 [![CI](https://github.com/soloyes/JavaTrans2Quik/actions/workflows/ci.yml/badge.svg)](https://github.com/soloyes/JavaTrans2Quik/actions/workflows/ci.yml)
 
-Java access to **Trans2Quik.dll**, the transaction API of the [QUIK](https://arqatech.com/) trading terminal by ARQA,
+Java access to Trans2Quik.dll, the transaction API of the [QUIK](https://arqatech.com/) trading terminal by ARQA,
 plus a small connector service on top of it.
 
-> **This is a fork.** The JNA wrapper (`org.jtrans2quik`) was written by
-> [Arsentii Nerushev (Enfernuz)](https://github.com/Enfernuz) in
-> [Enfernuz/JavaTrans2Quik](https://github.com/Enfernuz/JavaTrans2Quik), 2015–2019. All credit for the
-> wrapper goes to him. This fork adds **quik-bridge** (`io.github.soloyes.quikbridge`), an application
-> that keeps a connection to the terminal alive and streams the account's orders and trades.
+This is a fork. The JNA wrapper (`org.jtrans2quik`) was written by
+[Arsentii Nerushev (Enfernuz)](https://github.com/Enfernuz) in
+[Enfernuz/JavaTrans2Quik](https://github.com/Enfernuz/JavaTrans2Quik), 2015 to 2019, and the credit for it is his.
+The fork adds quik-bridge (`io.github.soloyes.quikbridge`), an application that keeps a connection to the
+terminal alive and streams the account's orders and trades.
 
 | | Upstream (Enfernuz) | Added in this fork |
 |---|---|---|
 | `org.jtrans2quik.wrapper.Trans2QuikLibrary` | JNA mapping of all TRANS2QUIK_* functions and callbacks | typed `TradeStatusCallback` |
 | `org.jtrans2quik.loader.Trans2QuikLibraryLoader` | loads the DLL | JNA 5 `Native.load`, windows-1251 strings |
-| `io.github.soloyes.quikbridge` | | connector service: config, reconnect loop, heartbeat, event bus, orders & trades subscription, tests |
+| `io.github.soloyes.quikbridge` | | connector service: config, reconnect loop, heartbeat, event bus, orders and trades subscription, tests, demo mode |
 
 ## What quik-bridge does
 
@@ -30,8 +30,8 @@ plus a small connector service on top of it.
    `TradeEvent` on the bus. The default sink logs them; register your own subscriber to do more.
 5. On Ctrl+C or service stop: unsubscribe, `TRANS2QUIK_DISCONNECT`, stop threads.
 
-**About the data.** Trans2Quik delivers *your own* orders and fills plus connection status, and it sends
-transactions. It has no order book, quotes or market trades API. For market data use QLua, for example
+Trans2Quik delivers your own orders and fills plus connection status, and it sends transactions. It has no
+order book, quotes or market trades API. For market data use QLua, for example
 [quik-lua-rpc](https://github.com/Enfernuz/quik-lua-rpc) by the same upstream author.
 
 ![Architecture](docs/architecture.svg)
@@ -43,6 +43,30 @@ transactions. It has no order book, quotes or market trades API. For market data
 `DllConnected` triggers the setup after every successful connect, so a terminal restart gives you a fresh
 callback, fresh subscriptions and a replay of the existing orders (mode 1, last one mode 2) before new ones
 (mode 0).
+
+## Demo without a terminal
+
+```bash
+java -jar JavaTrans2Quik-2.0.0-SNAPSHOT-all.jar --demo
+```
+
+This runs the same `QuikBridge` wiring, threads and subscribers as a real start, but against `SimulatedQuikApi`,
+the in-memory stand-in for the DLL that the test suite uses. The script is fixed: the first connect attempt
+fails, the second succeeds, the open orders are replayed, a GAZP order is placed and filled, the simulated
+terminal restarts (`DLL_DISCONNECTED`, reconnect, resubscribe, replay), LKOH fills, SBER is cancelled, a SiZ6
+futures order arrives through the second subscription and fills, then the bridge stops. No DLL is loaded and
+no terminal, account or exchange is involved; the instruments, numbers and prices are made up. The first and
+last log lines say so. `-Dquikbridge.demo.pace.ms=0` removes the pauses between steps.
+
+![Demo: start, connect, first orders](docs/screenshots/demo-1-connect.png)
+
+*Demo mode against the simulated terminal, part 1: the first connect attempt fails, the second attaches the
+DLL, the subscriptions go up and the first orders and trades arrive.*
+
+![Demo: terminal restart and reconnect](docs/screenshots/demo-2-reconnect.png)
+
+*Demo mode against the simulated terminal, part 2: the terminal drops the DLL, the bridge reconnects and
+resubscribes, more fills arrive, then it shuts down.*
 
 ## Requirements
 
@@ -56,7 +80,7 @@ callback, fresh subscriptions and a replay of the existing orders (mode 1, last 
 The DLL is ARQA's binary and is not in this repository. It ships in the QUIK terminal folder; the API package and
 its documentation are on [ARQA's site](https://arqatech.com/ru/support/files/). Put the DLL on `PATH` or point JNA
 at its folder with `-Djna.library.path=C:\QUIK`. A DLL older or newer than the terminal returns
-`DLL_VERSION_NOT_SUPPORTED`, which is why the one from your own terminal is the right one.
+`DLL_VERSION_NOT_SUPPORTED`, so take the one from your own terminal.
 
 ## Build and test
 
@@ -64,13 +88,17 @@ at its folder with `-Djna.library.path=C:\QUIK`. A DLL older or newer than the t
 mvn verify            # compile, run the JUnit 5 suite, build jars
 ```
 
-Tests use `FakeQuikApi`, an in-memory stand-in for the DLL. No test touches `JnaQuikApi` or
+Tests use `SimulatedQuikApi`, an in-memory stand-in for the DLL. No test touches `JnaQuikApi` or
 `Trans2QuikLibraryLoader`, so `TRANS2QUIK.dll` is never loaded and the suite runs on Linux and macOS (and in CI).
+
+![mvn verify test summary](docs/screenshots/mvn-verify.png)
+
+*`mvn -B verify` on macOS, colour forced with `-Dstyle.color=always`: 50 tests, no terminal needed.*
 
 Outputs:
 
-- `target/JavaTrans2Quik-<version>.jar` – library jar (wrapper + quik-bridge classes)
-- `target/JavaTrans2Quik-<version>-all.jar` – runnable jar with dependencies
+- `target/JavaTrans2Quik-<version>.jar`: library jar (wrapper + quik-bridge classes)
+- `target/JavaTrans2Quik-<version>-all.jar`: runnable jar with dependencies
 
 ## Run
 
@@ -150,9 +178,10 @@ src/main/java/io/github/soloyes/quikbridge/
   subscribers/    ConnectionSubscriber, CallbackSubscriber, OrderSubscriber, OrderTradeLogger
   subscription/   Subscription, SubscriptionPlanner
   config/         BridgeConfig
+  demo/           SimulatedQuikApi (stand-in for the DLL), Demo (the --demo script)
   QuikBridge, QuikBridgeApp
-src/test/java/    JUnit 5 suite with FakeQuikApi
-docs/             diagrams, Russian guide to the raw wrapper
+src/test/java/    JUnit 5 suite on SimulatedQuikApi
+docs/             diagrams, screenshots, Russian guide to the raw wrapper
 ```
 
 ## Low-level wrapper usage
@@ -164,13 +193,15 @@ transaction, callbacks, return codes) is kept in [docs/WRAPPER_RU.md](docs/WRAPP
 
 Форк [Enfernuz/JavaTrans2Quik](https://github.com/Enfernuz/JavaTrans2Quik): JNA-обёртка над Trans2Quik.dll
 (API транзакций терминала QUIK от ARQA). Обёртку написал Арсентий Нерушев, она осталась почти без изменений.
-В форке добавлен сервис **quik-bridge**:
+В форке добавлен сервис quik-bridge:
 
 - подключается к терминалу и переподключается при обрыве (коллбэк статуса плюс периодическая проверка);
 - подписывается на заявки и сделки своего счёта по списку классов и бумаг из `app.properties`
   и публикует их как события `OrderEvent` / `TradeEvent`;
 - корректно завершает работу: отписка, `TRANS2QUIK_DISCONNECT`, остановка потоков;
-- покрыт тестами на подставной реализации DLL, поэтому собирается и тестируется на любой ОС.
+- покрыт тестами на подставной реализации DLL (`SimulatedQuikApi`), поэтому собирается и тестируется на любой ОС;
+- `java -jar JavaTrans2Quik-2.0.0-SNAPSHOT-all.jar --demo` прогоняет сервис против той же имитации терминала:
+  без DLL и без QUIK, заявки и сделки в выводе придуманные.
 
 Стакана и котировок в Trans2Quik нет: это API для транзакций, своих заявок и сделок. Рыночные данные
 берите через QLua, например [quik-lua-rpc](https://github.com/Enfernuz/quik-lua-rpc).

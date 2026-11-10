@@ -1,6 +1,6 @@
 package io.github.soloyes.quikbridge.connection;
 
-import io.github.soloyes.quikbridge.FakeQuikApi;
+import io.github.soloyes.quikbridge.demo.SimulatedQuikApi;
 import io.github.soloyes.quikbridge.api.CallResult;
 import io.github.soloyes.quikbridge.api.QuikException;
 import io.github.soloyes.quikbridge.api.Status;
@@ -24,13 +24,13 @@ class ConnectorTest {
 		Thread.interrupted();
 	}
 
-	private Connector connector(FakeQuikApi api, long maxAttempts) {
+	private Connector connector(SimulatedQuikApi api, long maxAttempts) {
 		return new Connector(api, "C:\\QUIK", 250, maxAttempts, recordingSleeper);
 	}
 
 	@Test
 	void retriesWhileTerminalIsNotUpThenConnects() {
-		FakeQuikApi api = new FakeQuikApi().scriptConnect(
+		SimulatedQuikApi api = new SimulatedQuikApi().scriptConnect(
 			CallResult.of(Status.QUIK_TERMINAL_NOT_FOUND),
 			CallResult.failed(7, "terminal busy"),
 			CallResult.of(Status.QUIK_TERMINAL_NOT_FOUND));
@@ -42,7 +42,7 @@ class ConnectorTest {
 
 	@Test
 	void alreadyConnectedCountsAsConnected() {
-		FakeQuikApi api = new FakeQuikApi().scriptConnect(CallResult.of(Status.ALREADY_CONNECTED_TO_QUIK));
+		SimulatedQuikApi api = new SimulatedQuikApi().scriptConnect(CallResult.of(Status.ALREADY_CONNECTED_TO_QUIK));
 		assertTrue(connector(api, 0).connect());
 		assertTrue(sleeps.isEmpty());
 	}
@@ -50,7 +50,7 @@ class ConnectorTest {
 	@Test
 	void unsupportedDllVersionIsFatalAndNotRetried() {
 		// The 2019 code fell through from this case into "unknown status -> System.exit(0)".
-		FakeQuikApi api = new FakeQuikApi().scriptConnect(CallResult.of(Status.DLL_VERSION_NOT_SUPPORTED));
+		SimulatedQuikApi api = new SimulatedQuikApi().scriptConnect(CallResult.of(Status.DLL_VERSION_NOT_SUPPORTED));
 		QuikException e = assertThrows(QuikException.class, () -> connector(api, 0).connect());
 		assertTrue(e.getMessage().contains("not supported"));
 		assertEquals(1, api.count("connect"));
@@ -59,13 +59,13 @@ class ConnectorTest {
 
 	@Test
 	void undocumentedResultIsFatal() {
-		FakeQuikApi api = new FakeQuikApi().scriptConnect(new CallResult(99, 0, ""));
+		SimulatedQuikApi api = new SimulatedQuikApi().scriptConnect(new CallResult(99, 0, ""));
 		assertThrows(QuikException.class, () -> connector(api, 0).connect());
 	}
 
 	@Test
 	void givesUpAfterMaxAttemptsWithoutSleepingAfterTheLast() {
-		FakeQuikApi api = new FakeQuikApi().scriptConnect(
+		SimulatedQuikApi api = new SimulatedQuikApi().scriptConnect(
 			CallResult.of(Status.FAILED), CallResult.of(Status.FAILED), CallResult.of(Status.FAILED));
 		assertFalse(connector(api, 3).connect());
 		assertEquals(3, api.count("connect"));
@@ -74,7 +74,7 @@ class ConnectorTest {
 
 	@Test
 	void interruptDuringBackoffStopsTheLoopAndKeepsTheFlag() {
-		FakeQuikApi api = new FakeQuikApi().scriptConnect(CallResult.of(Status.FAILED), CallResult.of(Status.FAILED));
+		SimulatedQuikApi api = new SimulatedQuikApi().scriptConnect(CallResult.of(Status.FAILED), CallResult.of(Status.FAILED));
 		Connector c = new Connector(api, "C:\\QUIK", 250, 0, ms -> {
 			throw new InterruptedException();
 		});

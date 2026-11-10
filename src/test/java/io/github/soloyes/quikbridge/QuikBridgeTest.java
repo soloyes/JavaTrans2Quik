@@ -9,6 +9,7 @@ import io.github.soloyes.quikbridge.bus.SimpleEventBus;
 import io.github.soloyes.quikbridge.bus.Subscriber;
 import io.github.soloyes.quikbridge.config.BridgeConfig;
 import io.github.soloyes.quikbridge.connection.ConnectionState;
+import io.github.soloyes.quikbridge.demo.SimulatedQuikApi;
 import io.github.soloyes.quikbridge.events.OrderEvent;
 import io.github.soloyes.quikbridge.events.TradeEvent;
 import io.github.soloyes.quikbridge.subscription.Subscription;
@@ -29,9 +30,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** End-to-end flow of the service against {@link FakeQuikApi}. */
+/** End-to-end flow of the service against {@link SimulatedQuikApi}. */
 class QuikBridgeTest {
-	private final FakeQuikApi api = new FakeQuikApi();
+	private final SimulatedQuikApi api = new SimulatedQuikApi();
 	private final List<Event<?>> sink = Collections.synchronizedList(new ArrayList<>());
 	private QuikBridge bridge;
 

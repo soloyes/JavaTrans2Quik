@@ -1,0 +1,12 @@
+<!-- Console layout of `java -jar ... -\-demo` (ANSI colours, no log file). Selected by Demo.configureLogging(). -->
+<configuration>
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%gray(%d{HH:mm:ss.SSS}) %highlight(%-5level) %magenta(%-15thread) %cyan(%-20logger{0}) %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<root level="INFO">
+		<appender-ref ref="STDOUT"/>
+	</root>
+</configuration>
