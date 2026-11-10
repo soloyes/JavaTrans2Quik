@@ -6,7 +6,7 @@ import java.nio.charset.Charset;
  * Decoding of the zero-terminated byte buffers TRANS2QUIK.dll fills with error messages.
  */
 public final class CStrings {
-	/** QUIK writes its messages in the Windows ANSI code page for Russian. */
+	/** QUIK writes its messages in windows-1251 (Cyrillic ANSI code page). */
 	public static final Charset QUIK_CHARSET = Charset.forName("windows-1251");
 
 	private CStrings() {

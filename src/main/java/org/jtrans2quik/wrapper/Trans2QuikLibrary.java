@@ -124,22 +124,22 @@ public interface Trans2QuikLibrary extends StdCallLibrary {
     }
     
     /**
-     * Функция используется для установления связи библиотеки Trans2QUIK.dll с Рабочим местом QUIK
+     * Connects the Trans2QUIK.dll library to the QUIK workstation.
      * 
      * long TRANS2QUIK_API __stdcall TRANS2QUIK_CONNECT (LPSTR
      * lpstConnectionParamsString, long* pnExtendedErrorCode, LPSTR
      * lpstrErrorMessage, DWORD dwErrorMessageSize);
      * 
-     * @param lpcstrConnectionParamsString Полный путь к каталогу с исполняемым файлом INFO.EXE, с которым устанавливается соединение
-     * @param pnExtendedErrorCode В случае возникновения ошибки может содержать расширенный код ошибки
-     * @param lpstrErrorMessage В случае возникновения ошибки может получать сообщение о возникшей ошибке
-     * @param errorMessageSize Содержит длину строки, на которую ссылается указатель lpstrErrorMessage
-     * @return Возвращаемое число может принимать следующие значения:
-        TRANS2QUIK_SUCCESS – соединение установлено успешно,
-        TRANS2QUIK_QUIK_TERMINAL_NOT_FOUND – в указанном каталоге либо отсутствует INFO.EXE, либо у него не запущен сервис обработки внешних подключений, в pnExtendedErrorCode в этом случае передается 0,
-        TRANS2QUIK_DLL_VERSION_NOT_SUPPORTED – используемая версия Trans2QUIK.dll не поддерживается указанным INFO.EXE, в pnExtendedErrorCode в этом случае передается 0,
-        TRANS2QUIK_DLL_ALREADY_CONNECTED_TO_QUIK – соединение уже установлено, в pnExtendedErrorCode в этом случае передается 0,
-        TRANS2QUIK_FAILED – произошла ошибка при установлении соединения, в pnExtendedErrorCode в этом случае передается дополнительный код ошибки
+     * @param lpcstrConnectionParamsString Full path to the folder with the INFO.EXE executable to connect to
+     * @param pnExtendedErrorCode On error, may contain the extended error code
+     * @param lpstrErrorMessage On error, may receive the error message
+     * @param errorMessageSize Length of the buffer that lpstrErrorMessage points to
+     * @return One of the following values:
+        TRANS2QUIK_SUCCESS: the connection is established;
+        TRANS2QUIK_QUIK_TERMINAL_NOT_FOUND: there is no INFO.EXE in the given folder, or its external connections service is not running; pnExtendedErrorCode is 0;
+        TRANS2QUIK_DLL_VERSION_NOT_SUPPORTED: this INFO.EXE does not support the Trans2QUIK.dll version in use; pnExtendedErrorCode is 0;
+        TRANS2QUIK_DLL_ALREADY_CONNECTED_TO_QUIK: the connection is already established; pnExtendedErrorCode is 0;
+        TRANS2QUIK_FAILED: connecting failed; pnExtendedErrorCode holds an additional error code.
      * @since 1.0.0
      */
     NativeLong TRANS2QUIK_CONNECT(
@@ -150,17 +150,17 @@ public interface Trans2QuikLibrary extends StdCallLibrary {
     );
     
     /**
-     * Функция используется для разрыва связи библиотеки Trans2QUIK.dll с терминалом QUIK
+     * Disconnects the Trans2QUIK.dll library from the QUIK terminal.
      * 
      * long TRANS2QUIK_API __stdcall TRANS2QUIK_DISCONNECT 
      * (long* pnExtendedErrorCode, LPSTR lpstrErrorMessage, DWORD dwErrorMessageSize);
-     * @param pnExtendedErrorCode В случае возникновения ошибки может содержать расширенный код ошибки
-     * @param lpstrErrorMessage В случае возникновения ошибки может получать сообщение о возникшей ошибке
-     * @param dwErrorMessageSize Содержит длину строки, на которую ссылается указатель lpstrErrorMessage
-     * @return Возвращаемое число может принимать следующие значения:
-        TRANS2QUIK_SUCCESS – соединение библиотеки Trans2QUIK.dll с Рабочим местом QUIK разорвано успешно,
-        TRANS2QUIK_FAILED – произошла ошибка при разрыве соединения, в pnExtendedErrorCode в этом случае передается дополнительный код ошибки,
-        TRANS2QUIK_DLL_NOT_CONNECTED – попытка разорвать соединение при не установленной связи. В этом случае в pnExtendedErrorCode может передаваться дополнительный код ошибки
+     * @param pnExtendedErrorCode On error, may contain the extended error code
+     * @param lpstrErrorMessage On error, may receive the error message
+     * @param dwErrorMessageSize Length of the buffer that lpstrErrorMessage points to
+     * @return One of the following values:
+        TRANS2QUIK_SUCCESS: the library is disconnected from the QUIK workstation;
+        TRANS2QUIK_FAILED: disconnecting failed; pnExtendedErrorCode holds an additional error code;
+        TRANS2QUIK_DLL_NOT_CONNECTED: there was no connection to break; pnExtendedErrorCode may hold an additional error code.
      * @since 1.0.0
      */
     NativeLong TRANS2QUIK_DISCONNECT(

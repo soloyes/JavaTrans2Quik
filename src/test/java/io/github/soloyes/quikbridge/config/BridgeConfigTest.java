@@ -65,9 +65,9 @@ class BridgeConfigTest {
 	@Test
 	void loadsExplicitPathAsUtf8(@TempDir Path dir) throws Exception {
 		Path f = dir.resolve("my.properties");
-		Files.write(f, "quik.path=C:\\\\Квик\nreconnect.interval.ms=250\n".getBytes(StandardCharsets.UTF_8));
+		Files.write(f, "quik.path=C:\\\\\u041a\u0432\u0438\u043a\nreconnect.interval.ms=250\n".getBytes(StandardCharsets.UTF_8));
 		BridgeConfig c = BridgeConfig.load(f.toString());
-		assertEquals("C:\\Квик", c.quikPath());
+		assertEquals("C:\\\u041a\u0432\u0438\u043a", c.quikPath());
 		assertEquals(250, c.reconnectIntervalMs());
 		assertEquals(f.toAbsolutePath().toString(), c.source());
 	}

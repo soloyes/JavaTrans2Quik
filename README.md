@@ -181,34 +181,13 @@ src/main/java/io/github/soloyes/quikbridge/
   demo/           SimulatedQuikApi (stand-in for the DLL), Demo (the --demo script)
   QuikBridge, QuikBridgeApp
 src/test/java/    JUnit 5 suite on SimulatedQuikApi
-docs/             diagrams, screenshots, Russian guide to the raw wrapper
+docs/             diagrams, screenshots, guide to the raw wrapper
 ```
 
 ## Low-level wrapper usage
 
-The upstream Russian guide to calling Trans2Quik.dll directly through the wrapper (connect, send a
-transaction, callbacks, return codes) is kept in [docs/WRAPPER_RU.md](docs/WRAPPER_RU.md).
-
-## Кратко по-русски
-
-Форк [Enfernuz/JavaTrans2Quik](https://github.com/Enfernuz/JavaTrans2Quik): JNA-обёртка над Trans2Quik.dll
-(API транзакций терминала QUIK от ARQA). Обёртку написал Арсентий Нерушев, она осталась почти без изменений.
-В форке добавлен сервис quik-bridge:
-
-- подключается к терминалу и переподключается при обрыве (коллбэк статуса плюс периодическая проверка);
-- подписывается на заявки и сделки своего счёта по списку классов и бумаг из `app.properties`
-  и публикует их как события `OrderEvent` / `TradeEvent`;
-- корректно завершает работу: отписка, `TRANS2QUIK_DISCONNECT`, остановка потоков;
-- покрыт тестами на подставной реализации DLL (`SimulatedQuikApi`), поэтому собирается и тестируется на любой ОС;
-- `java -jar JavaTrans2Quik-2.0.0-SNAPSHOT-all.jar --demo` прогоняет сервис против той же имитации терминала:
-  без DLL и без QUIK, заявки и сделки в выводе придуманные.
-
-Стакана и котировок в Trans2Quik нет: это API для транзакций, своих заявок и сделок. Рыночные данные
-берите через QLua, например [quik-lua-rpc](https://github.com/Enfernuz/quik-lua-rpc).
-
-`TRANS2QUIK.dll` и руководство QUIK в репозитории не лежат: это файлы ARQA. DLL есть в папке терминала,
-документация на [сайте ARQA](https://arqatech.com/ru/support/files/). Как вызывать обёртку напрямую:
-[docs/WRAPPER_RU.md](docs/WRAPPER_RU.md).
+How to call Trans2Quik.dll directly through the wrapper (connect, send a transaction, callbacks,
+return codes) is described in [docs/WRAPPER.md](docs/WRAPPER.md), translated from the upstream guide.
 
 ## Credits and licence
 

@@ -35,18 +35,19 @@ class StatusTest {
 
 	@Test
 	void callResultToStringCarriesExtendedError() {
-		CallResult r = CallResult.failed(42, "нет связи");
+		CallResult r = CallResult.failed(42, "no connection");
 		assertEquals(Status.FAILED, r.status());
-		assertEquals("FAILED [ext=42, нет связи]", r.toString());
+		assertEquals("FAILED [ext=42, no connection]", r.toString());
 	}
 
 	@Test
 	void cStringStopsAtZeroTerminatorAndDecodesWindows1251() {
 		byte[] buf = new byte[64];
-		byte[] text = "Ошибка соединения".getBytes(Charset.forName("windows-1251"));
+		// "Connection error" in Russian, as QUIK sends it in windows-1251
+		byte[] text = "\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u043e\u0435\u0434\u0438\u043d\u0435\u043d\u0438\u044f".getBytes(Charset.forName("windows-1251"));
 		System.arraycopy(text, 0, buf, 0, text.length);
 		buf[text.length + 2] = 'x'; // garbage after the terminator must be ignored
-		assertEquals("Ошибка соединения", CStrings.decode(buf));
+		assertEquals("\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u043e\u0435\u0434\u0438\u043d\u0435\u043d\u0438\u044f", CStrings.decode(buf));
 	}
 
 	@Test
