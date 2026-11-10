@@ -1,39 +1,64 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="880" height="760" viewBox="0 0 880 760" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="850" viewBox="0 0 880 850" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
   <title>quik-bridge architecture</title>
   <defs>
-    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#7d8590"/>
+    <marker id="arr" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,1 L10,5 L0,9 Z" fill="#7d8590"/>
     </marker>
     <style>
-      .t  { font-size: 15px; font-weight: 600; fill: #1f2328; text-anchor: middle; }
-      .s  { font-size: 12px; fill: #424a53; text-anchor: middle; }
-      .lbl { font-size: 12px; font-weight: 600; fill: #7d8590; }
-      .edge { stroke: #7d8590; stroke-width: 1.6; fill: none; }
-      .zone { fill: none; stroke: #7d8590; stroke-width: 1.4; stroke-dasharray: 6 5; }
+      .t    { font-size: 15px; font-weight: 600; fill: #1f2328; text-anchor: middle; }
+      .s    { font-size: 12px; fill: #424a53; text-anchor: middle; }
+      .zl   { font-size: 12px; font-weight: 600; fill: #7d8590; }
+      .lbl  { font-size: 12px; font-weight: 600; fill: #57606a; text-anchor: middle; }
+      .lbl2 { font-size: 12px; fill: #57606a; text-anchor: middle; }
+      .pill { fill: #eaeef2; }
+      .edge { stroke: #7d8590; stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .dash { stroke-dasharray: 6 4; }
+      .zone { fill: none; stroke: #7d8590; stroke-width: 1.2; stroke-dasharray: 6 5; }
       .app  { fill: #ddf4ff; stroke: #54aeff; stroke-width: 1.5; }
       .sub  { fill: #dafbe1; stroke: #4ac26b; stroke-width: 1.5; }
       .api  { fill: #fff8c5; stroke: #d4a72c; stroke-width: 1.5; }
       .up   { fill: #fbefff; stroke: #c297ff; stroke-width: 1.5; }
       .ven  { fill: #ffebe9; stroke: #ff8182; stroke-width: 1.5; }
-      .fake { fill: #f6f8fa; stroke: #8c959f; stroke-width: 1.5; stroke-dasharray: 5 4; }
+      .sim  { fill: #f6f8fa; stroke: #8c959f; stroke-width: 1.5; stroke-dasharray: 5 4; }
     </style>
   </defs>
 
   <!-- zones -->
-  <rect class="zone" x="20" y="20" width="840" height="470" rx="12"/>
-  <text class="lbl" x="34" y="40">JVM: io.github.soloyes.quikbridge (fork)</text>
-  <rect class="zone" x="20" y="515" width="560" height="225" rx="12"/>
-  <text class="lbl" x="34" y="535">Windows host</text>
+  <rect class="zone" x="20" y="20" width="840" height="548" rx="12"/>
+  <text class="zl" x="34" y="41">JVM: io.github.soloyes.quikbridge (fork)</text>
+  <rect class="zone" x="310" y="596" width="300" height="236" rx="12"/>
+  <text class="zl" x="324" y="617">Windows host</text>
+
+  <!-- edges (drawn first, boxes and labels cover them where needed) -->
+  <g id="edges">
+    <path class="edge" marker-end="url(#arr)" d="M458,106 V138"/>
+    <path class="edge" marker-end="url(#arr)" d="M165,186 V222"/>
+    <path class="edge" marker-end="url(#arr)" d="M360,186 V222"/>
+    <path class="edge" marker-end="url(#arr)" d="M555,186 V222"/>
+    <path class="edge" marker-end="url(#arr)" d="M750,186 V222"/>
+    <path class="edge" marker-end="url(#arr)" d="M165,284 V320"/>
+    <path class="edge" marker-end="url(#arr)" d="M360,284 V320"/>
+    <path class="edge" marker-end="url(#arr)" d="M555,284 V320"/>
+    <path class="edge" marker-end="url(#arr)" d="M295,346 H330"/>
+    <path class="edge dash" marker-end="url(#arr)" d="M590,346 H650"/>
+    <path class="edge" marker-end="url(#arr)" d="M460,372 V404"/>
+    <path class="edge" marker-end="url(#arr)" d="M460,456 V488"/>
+    <path class="edge" marker-end="url(#arr)" d="M460,540 V632"/>
+    <path class="edge" marker-start="url(#arr)" marker-end="url(#arr)" d="M460,686 V752"/>
+    <path class="edge" marker-start="url(#arr)" marker-end="url(#arr)" d="M590,779 H680"/>
+    <!-- callbacks from the DLL back into the bus -->
+    <path class="edge dash" marker-end="url(#arr)" d="M330,659 H55 Q45,659 45,649 V172 Q45,162 55,162 H75"/>
+  </g>
 
   <!-- row 1: app -->
-  <rect class="app" x="300" y="52" width="280" height="54" rx="8"/>
-  <text class="t" x="440" y="75">QuikBridgeApp / QuikBridge</text>
-  <text class="s" x="440" y="94">config → plan → start → shutdown hook</text>
+  <rect class="app" x="318" y="52" width="280" height="54" rx="8"/>
+  <text class="t" x="458" y="75">QuikBridgeApp / QuikBridge</text>
+  <text class="s" x="458" y="94">config → plan → start → shutdown hook</text>
 
   <!-- row 2: bus -->
-  <rect class="app" x="200" y="138" width="480" height="48" rx="8"/>
-  <text class="t" x="440" y="159">SimpleEventBus</text>
-  <text class="s" x="440" y="177">thread-safe, routes events by supports()</text>
+  <rect class="app" x="75" y="138" width="765" height="48" rx="8"/>
+  <text class="t" x="458" y="159">SimpleEventBus</text>
+  <text class="s" x="458" y="177">thread-safe, routes events by supports()</text>
 
   <!-- row 3: subscribers -->
   <rect class="sub" x="75" y="222" width="180" height="62" rx="8"/>
@@ -44,7 +69,7 @@
   <text class="s" x="360" y="266">connection status callback</text>
   <rect class="sub" x="465" y="222" width="180" height="62" rx="8"/>
   <text class="t" x="555" y="247">OrderSubscriber</text>
-  <text class="s" x="555" y="266">orders &amp; trades subscription</text>
+  <text class="s" x="555" y="266">orders and trades subscription</text>
   <rect class="sub" x="660" y="222" width="180" height="62" rx="8"/>
   <text class="t" x="750" y="247">Your subscriber</text>
   <text class="s" x="750" y="266">OrderTradeLogger, DB, strategy</text>
@@ -53,54 +78,48 @@
   <rect class="api" x="75" y="320" width="220" height="52" rx="8"/>
   <text class="t" x="185" y="342">Connector + Heartbeat</text>
   <text class="s" x="185" y="360">retry, decide, poll status</text>
-  <rect class="api" x="330" y="320" width="300" height="52" rx="8"/>
-  <text class="t" x="480" y="342">QuikApi (interface)</text>
-  <text class="s" x="480" y="360">TRANS2QUIK_* in plain Java types</text>
-  <rect class="fake" x="665" y="320" width="175" height="52" rx="8"/>
-  <text class="t" x="752" y="342">FakeQuikApi</text>
-  <text class="s" x="752" y="360">JUnit tests, no DLL</text>
+  <rect class="api" x="330" y="320" width="260" height="52" rx="8"/>
+  <text class="t" x="460" y="342">QuikApi (interface)</text>
+  <text class="s" x="460" y="360">TRANS2QUIK_* in plain Java types</text>
+  <rect class="sim" x="650" y="320" width="190" height="52" rx="8"/>
+  <text class="t" x="745" y="342">SimulatedQuikApi</text>
+  <text class="s" x="745" y="360">tests and --demo, no DLL</text>
 
-  <!-- row 5: jna -->
-  <rect class="api" x="150" y="408" width="260" height="58" rx="8"/>
-  <text class="t" x="280" y="432">JnaQuikApi</text>
-  <text class="s" x="280" y="451">keeps callbacks alive, cp1251</text>
-  <rect class="up" x="440" y="408" width="300" height="58" rx="8"/>
-  <text class="t" x="590" y="432">org.jtrans2quik wrapper</text>
-  <text class="s" x="590" y="451">JNA interface, upstream by Enfernuz</text>
+  <!-- row 5: jna + wrapper -->
+  <rect class="api" x="330" y="404" width="260" height="52" rx="8"/>
+  <text class="t" x="460" y="426">JnaQuikApi</text>
+  <text class="s" x="460" y="444">keeps callbacks alive, cp1251</text>
+  <rect class="up" x="330" y="488" width="260" height="52" rx="8"/>
+  <text class="t" x="460" y="510">org.jtrans2quik wrapper</text>
+  <text class="s" x="460" y="528">JNA interface, upstream by Enfernuz</text>
 
-  <!-- native -->
-  <rect class="ven" x="170" y="550" width="280" height="54" rx="8"/>
-  <text class="t" x="310" y="573">TRANS2QUIK.dll</text>
-  <text class="s" x="310" y="592">ARQA, ships with QUIK</text>
-  <rect class="ven" x="170" y="660" width="280" height="54" rx="8"/>
-  <text class="t" x="310" y="683">QUIK terminal (info.exe)</text>
-  <text class="s" x="310" y="702">external transactions enabled</text>
-  <rect class="ven" x="640" y="660" width="200" height="54" rx="8"/>
-  <text class="t" x="740" y="683">Broker's QUIK server</text>
-  <text class="s" x="740" y="702">exchange access</text>
+  <!-- native side -->
+  <rect class="ven" x="330" y="632" width="260" height="54" rx="8"/>
+  <text class="t" x="460" y="655">TRANS2QUIK.dll</text>
+  <text class="s" x="460" y="674">ARQA, ships with QUIK</text>
+  <rect class="ven" x="330" y="752" width="260" height="54" rx="8"/>
+  <text class="t" x="460" y="775">QUIK terminal (info.exe)</text>
+  <text class="s" x="460" y="794">external transactions enabled</text>
+  <rect class="ven" x="680" y="752" width="180" height="54" rx="8"/>
+  <text class="t" x="770" y="775">Broker's QUIK server</text>
+  <text class="s" x="770" y="794">exchange access</text>
 
-  <!-- edges: commands down -->
-  <path class="edge" marker-end="url(#arr)" d="M440,106 V136"/>
-  <path class="edge" marker-end="url(#arr)" d="M300,186 L180,220"/>
-  <path class="edge" marker-end="url(#arr)" d="M390,186 L365,220"/>
-  <path class="edge" marker-end="url(#arr)" d="M490,186 L545,220"/>
-  <path class="edge" marker-end="url(#arr)" d="M580,186 L735,220"/>
-  <path class="edge" marker-end="url(#arr)" d="M165,284 V318"/>
-  <path class="edge" marker-end="url(#arr)" d="M295,346 H328"/>
-  <path class="edge" marker-end="url(#arr)" d="M380,284 L430,318"/>
-  <path class="edge" marker-end="url(#arr)" d="M545,284 L520,318"/>
-  <path class="edge" stroke-dasharray="5 4" marker-end="url(#arr)" d="M630,346 H663"/>
-  <text class="lbl" x="633" y="338">tests</text>
-  <path class="edge" marker-end="url(#arr)" d="M420,372 L320,406"/>
-  <path class="edge" marker-end="url(#arr)" d="M410,437 H438"/>
-  <path class="edge" marker-end="url(#arr)" d="M560,466 L400,548"/>
-  <text class="lbl" x="492" y="507">JNA calls</text>
-  <path class="edge" marker-start="url(#arr)" marker-end="url(#arr)" d="M310,606 V658"/>
-  <text class="lbl" x="320" y="637">local connection</text>
-  <path class="edge" marker-start="url(#arr)" marker-end="url(#arr)" d="M452,687 H638"/>
-  <text class="lbl" x="500" y="679">network</text>
-
-  <!-- callbacks back up -->
-  <path class="edge" stroke-dasharray="6 4" marker-end="url(#arr)" d="M170,577 H45 V162 H198"/>
-  <text class="lbl" transform="translate(36,470) rotate(-90)">callbacks → events: connection status, orders, trades</text>
+  <!-- edge labels -->
+  <g class="lab">
+    <rect class="pill" data-on="1" x="424" y="573" width="72" height="18" rx="9"/>
+    <text class="lbl" x="460" y="586">JNA calls</text>
+  </g>
+  <g class="lab">
+    <rect class="pill" x="472" y="710" width="114" height="18" rx="9"/>
+    <text class="lbl" x="529" y="723">local connection</text>
+  </g>
+  <g class="lab">
+    <rect class="pill" x="616" y="754" width="58" height="18" rx="9"/>
+    <text class="lbl" x="645" y="767">network</text>
+  </g>
+  <g class="lab">
+    <rect class="pill" data-on="1" x="30" y="420" width="232" height="40" rx="9"/>
+    <text class="lbl" x="152" y="437">callbacks → events</text>
+    <text class="lbl2" x="152" y="454">connection status, orders, trades</text>
+  </g>
 </svg>

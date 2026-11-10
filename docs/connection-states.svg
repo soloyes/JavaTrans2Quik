@@ -1,23 +1,44 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="460" viewBox="0 0 960 460" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="480" viewBox="0 0 1000 480" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
   <title>quik-bridge connection states</title>
   <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#7d8590"/>
+    <marker id="a" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,1 L10,5 L0,9 Z" fill="#7d8590"/>
     </marker>
     <style>
-      .t  { font-size: 15px; font-weight: 600; fill: #1f2328; text-anchor: middle; }
-      .s  { font-size: 12px; fill: #424a53; text-anchor: middle; }
-      .n  { font-size: 12.5px; fill: #1f2328; }
-      .lbl { font-size: 12px; font-weight: 600; fill: #7d8590; }
-      .c  { text-anchor: middle; }
-      .edge { stroke: #7d8590; stroke-width: 1.6; fill: none; }
-      .off { fill: #ffebe9; stroke: #ff8182; stroke-width: 1.5; }
-      .mid { fill: #fff8c5; stroke: #d4a72c; stroke-width: 1.5; }
-      .on  { fill: #dafbe1; stroke: #4ac26b; stroke-width: 1.5; }
-      .end { fill: #eaeef2; stroke: #8c959f; stroke-width: 1.5; }
+      .t    { font-size: 15px; font-weight: 600; fill: #1f2328; text-anchor: middle; }
+      .s    { font-size: 12px; fill: #424a53; text-anchor: middle; }
+      .n    { font-size: 12.5px; fill: #1f2328; }
+      .lbl  { font-size: 12px; font-weight: 600; fill: #57606a; text-anchor: middle; }
+      .lbl2 { font-size: 12px; fill: #57606a; text-anchor: middle; }
+      .pill { fill: #eaeef2; }
+      .edge { stroke: #7d8590; stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .off  { fill: #ffebe9; stroke: #ff8182; stroke-width: 1.5; }
+      .mid  { fill: #fff8c5; stroke: #d4a72c; stroke-width: 1.5; }
+      .on   { fill: #dafbe1; stroke: #4ac26b; stroke-width: 1.5; }
+      .end  { fill: #eaeef2; stroke: #8c959f; stroke-width: 1.5; }
       .note { fill: #f6f8fa; stroke: #8c959f; stroke-width: 1.2; stroke-dasharray: 5 4; }
     </style>
   </defs>
+
+  <!-- edges -->
+  <g id="edges">
+    <circle cx="18" cy="208" r="5" fill="#7d8590"/>
+    <path class="edge" marker-end="url(#a)" d="M23,208 H50"/>
+    <!-- retry loop on DLL_DISCONNECTED -->
+    <path class="edge" marker-end="url(#a)" d="M115,180 V150 Q115,140 125,140 H165 Q175,140 175,150 V180"/>
+    <!-- forward -->
+    <path class="edge" marker-end="url(#a)" d="M240,197 H405"/>
+    <path class="edge" marker-end="url(#a)" d="M595,197 H760"/>
+    <!-- back -->
+    <path class="edge" marker-end="url(#a)" d="M405,221 H240"/>
+    <path class="edge" marker-end="url(#a)" d="M760,221 H595"/>
+    <!-- lost the DLL while fully connected -->
+    <path class="edge" marker-end="url(#a)" d="M855,236 V290 Q855,300 845,300 H175 Q165,300 165,290 V236"/>
+    <!-- fatal -->
+    <path class="edge" marker-end="url(#a)" d="M95,236 V400"/>
+    <!-- note anchor -->
+    <path class="edge" stroke-dasharray="2 4" d="M500,126 V180"/>
+  </g>
 
   <!-- note -->
   <rect class="note" x="400" y="22" width="530" height="104" rx="8"/>
@@ -26,47 +47,51 @@
   <text class="n" x="414" y="82">• UNSUBSCRIBE, then SUBSCRIBE_ORDERS / _TRADES per bundle</text>
   <text class="n" x="414" y="100">• START_ORDERS / START_TRADES → OrderEvent, TradeEvent</text>
   <text class="n" x="414" y="118" fill="#424a53">If the terminal is already online, connect lands in SERVER_CONNECTED.</text>
-  <path class="edge" stroke-dasharray="3 4" d="M490,126 V178"/>
 
   <!-- states -->
-  <rect class="off" x="65" y="180" width="190" height="56" rx="28"/>
-  <text class="t" x="160" y="204">DLL_DISCONNECTED</text>
-  <text class="s" x="160" y="222">DLL not attached</text>
-  <rect class="mid" x="395" y="180" width="190" height="56" rx="28"/>
-  <text class="t" x="490" y="204">DLL_CONNECTED</text>
-  <text class="s" x="490" y="222">terminal offline</text>
-  <rect class="on" x="725" y="180" width="190" height="56" rx="28"/>
-  <text class="t" x="820" y="204">SERVER_CONNECTED</text>
-  <text class="s" x="820" y="222">full chain up</text>
+  <rect class="off" x="50" y="180" width="190" height="56" rx="12"/>
+  <text class="t" x="145" y="204">DLL_DISCONNECTED</text>
+  <text class="s" x="145" y="222">DLL not attached</text>
+  <rect class="mid" x="405" y="180" width="190" height="56" rx="12"/>
+  <text class="t" x="500" y="204">DLL_CONNECTED</text>
+  <text class="s" x="500" y="222">terminal has no server link</text>
+  <rect class="on" x="760" y="180" width="190" height="56" rx="12"/>
+  <text class="t" x="855" y="204">SERVER_CONNECTED</text>
+  <text class="s" x="855" y="222">full chain up</text>
 
-  <!-- start -->
-  <circle cx="20" cy="208" r="6" fill="#7d8590"/>
-  <path class="edge" marker-end="url(#a)" d="M26,208 H63"/>
+  <rect class="end" x="20" y="400" width="230" height="52" rx="8"/>
+  <text class="t" x="135" y="423">Fatal</text>
+  <text class="s" x="135" y="441">stop, exit code 1</text>
 
-  <!-- retry loop -->
-  <path class="edge" marker-end="url(#a)" d="M125,180 C110,110 210,110 195,180"/>
-  <text class="lbl c" x="160" y="104">FAILED / TERMINAL_NOT_FOUND:</text>
-  <text class="lbl c" x="160" y="120">wait reconnect.interval.ms, retry</text>
-
-  <!-- forward -->
-  <path class="edge" marker-end="url(#a)" d="M255,198 H393"/>
-  <text class="lbl c" x="325" y="190">connect OK</text>
-  <path class="edge" marker-end="url(#a)" d="M585,198 H723"/>
-  <text class="lbl c" x="655" y="190">QUIK_CONNECTED</text>
-
-  <!-- back -->
-  <path class="edge" marker-end="url(#a)" d="M725,222 H587"/>
-  <text class="lbl c" x="655" y="242">QUIK_DISCONNECTED</text>
-  <path class="edge" marker-end="url(#a)" d="M395,222 H257"/>
-  <text class="lbl c" x="325" y="242">DLL_DISCONNECTED</text>
-  <path class="edge" marker-end="url(#a)" d="M820,236 C820,330 180,330 180,238"/>
-  <text class="lbl c" x="500" y="330">DLL_DISCONNECTED (status callback or heartbeat) → reconnect</text>
-
-  <!-- fatal -->
-  <path class="edge" marker-end="url(#a)" d="M100,236 V378"/>
-  <text class="lbl" x="112" y="350">DLL_VERSION_NOT_SUPPORTED, undocumented code,</text>
-  <text class="lbl" x="112" y="366">or reconnect.max.attempts used up</text>
-  <rect class="end" x="20" y="380" width="230" height="52" rx="8"/>
-  <text class="t" x="135" y="403">Fatal</text>
-  <text class="s" x="135" y="421">stop, exit code 1</text>
+  <!-- edge labels -->
+  <g class="lab">
+    <rect class="pill" x="38" y="96" width="214" height="36" rx="9"/>
+    <text class="lbl" x="145" y="111">FAILED / TERMINAL_NOT_FOUND:</text>
+    <text class="lbl2" x="145" y="127">wait reconnect.interval.ms, retry</text>
+  </g>
+  <g class="lab">
+    <rect class="pill" x="281" y="174" width="84" height="18" rx="9"/>
+    <text class="lbl" x="323" y="187">connect OK</text>
+  </g>
+  <g class="lab">
+    <rect class="pill" x="618" y="174" width="120" height="18" rx="9"/>
+    <text class="lbl" x="678" y="187">QUIK_CONNECTED</text>
+  </g>
+  <g class="lab">
+    <rect class="pill" x="256" y="226" width="134" height="18" rx="9"/>
+    <text class="lbl" x="323" y="239">DLL_DISCONNECTED</text>
+  </g>
+  <g class="lab">
+    <rect class="pill" x="607" y="226" width="142" height="18" rx="9"/>
+    <text class="lbl" x="678" y="239">QUIK_DISCONNECTED</text>
+  </g>
+  <g class="lab">
+    <rect class="pill" data-on="1" x="305" y="291" width="410" height="18" rx="9"/>
+    <text class="lbl" x="510" y="304">DLL_DISCONNECTED (status callback or heartbeat) → reconnect</text>
+  </g>
+  <g class="lab">
+    <rect class="pill" x="102" y="322" width="342" height="36" rx="9"/>
+    <text class="lbl" x="273" y="337">DLL_VERSION_NOT_SUPPORTED, undocumented code,</text>
+    <text class="lbl2" x="273" y="353">or reconnect.max.attempts used up</text>
+  </g>
 </svg>
