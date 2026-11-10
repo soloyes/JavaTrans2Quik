@@ -1,129 +1,192 @@
-# JavaTrans2Quik
-JNA-based Java-wrapper for Trans2Quik.dll version 1.2.0.3 (http://arqatech.com/upload/iblock/006/Trans2QuikAPI_1.2.rar)
-("QUIK", Trading Platform by ARQA)
+# JavaTrans2Quik / quik-bridge
 
-<h3>Как использовать</h3>
+[![CI](https://github.com/soloyes/JavaTrans2Quik/actions/workflows/ci.yml/badge.svg)](https://github.com/soloyes/JavaTrans2Quik/actions/workflows/ci.yml)
 
-1) Инициализируйте экземпляр обёртки библиотеки, используя класс <i>Trans2QuikLibraryLoader</i>:
-```
-// ...
-Trans2QuikLibrary quikAdapter = Trans2QuikLibraryLoader.LIBRARY;
-// ...
-```
-Необязательно заводить отдельную ссылку -- для вызова методов можно обращаться напрямую к <i>Trans2QuikLibraryLoader.LIBRARY</i>.
+Java access to **Trans2Quik.dll**, the transaction API of the [QUIK](https://arqatech.com/) trading terminal by ARQA,
+plus a small connector service on top of it.
 
-2) Большинство методов библиотеки Trans2Quik.dll возвращают статус выполнения, а при возникновении ошибки записывают информацию о ней в специальные объекты (обычно это ссылка на код ошибки и буффер под описание ошибки), которые передаются как аргументы метода. Выделим под них место:
-```
-NativeLongByReference errorCode = new NativeLongByReference();
-byte[] buffer = new byte[255];
-```
-3) Для соединения с терминалом необходимо вызвать метод <i>TRANS2QUIK_CONNECT</i> и, помимо всего прочего, передать туда путь к папке с терминалом QUIK:
-```
-String pathToQuik = "C:\\Programs\\Quik";
-NativeLong returnCode = quikAdapter.TRANS2QUIK_CONNECT(pathToQuik, errorCode, buffer, buffer.length);
-```
-4) Чтобы отправить транзакцию в терминал, необходимо:
+> **This is a fork.** The JNA wrapper (`org.jtrans2quik`) was written by
+> [Arsentii Nerushev (Enfernuz)](https://github.com/Enfernuz) in
+> [Enfernuz/JavaTrans2Quik](https://github.com/Enfernuz/JavaTrans2Quik), 2015–2019. All credit for the
+> wrapper goes to him. This fork adds **quik-bridge** (`io.github.soloyes.quikbridge`), an application
+> that keeps a connection to the terminal alive and streams the account's orders and trades.
 
-    1) Сформировать строковое представление транзакции (примеры таких представлений можно найти в файле "6 Работа с др приложениями.pdf" из инструкции к API терминала). Чтобы не усложнять, возьмём уже сформированную строку.
-    2) Вызвать метод библиотеки <i>TRANS2QUIK_SEND_SYNC_TRANSACTION( ... )</i> и передать ему строковое представление транзации, объекты под код ошибки и сообщение для ошибки.
-    <br/>Есть также и асинхронный способ отправки транзакции: с помощью метода <i>TRANS2QUIK_SEND_ASYNC_TRANSACTION</i> и коллбэка <i>TransactionReplyCallback</i>, устанавливаемого посредством метода <i>TRANS2QUIK_SET_TRANSACTIONS_REPLY_CALLBACK</i>.
-    
-**Внимание!** Строковое представление транзакции взято из руководства к библиотеке trans2quik.dll, и транзакция, основанная на нём, на сервер отправлена не будет, т.к. в ней имеются недействительные значения параметров. Для грамотного составления строк транзакций рекомендую ознакомиться с форматом транзакций в файле "6 Работа с др приложениями.pdf", пункт 6.11.3.
-```
-String transaction = "ACCOUNT=NL0080000043; CLIENT_CODE=467; TYPE=L; TRANS_ID=1; CLASSCODE=TQBR; SECCODE=RU0008943394; ACTION=NEW_ORDER; OPERATION=S; PRICE=43,21; QUANTITY=3;"
-Long result = quikAdapter.TRANS2QUIK_SEND_SYNC_TRANSACTION(transaction, errorCode, buffer, buffer.length);
-```
-Расшифровка результата <i>result</i> работы метода следующая (алиасы говорят сами за себя):
+| | Upstream (Enfernuz) | Added in this fork |
+|---|---|---|
+| `org.jtrans2quik.wrapper.Trans2QuikLibrary` | JNA mapping of all TRANS2QUIK_* functions and callbacks | typed `TradeStatusCallback` |
+| `org.jtrans2quik.loader.Trans2QuikLibraryLoader` | loads the DLL | JNA 5 `Native.load`, windows-1251 strings |
+| `io.github.soloyes.quikbridge` | | connector service: config, reconnect loop, heartbeat, event bus, orders & trades subscription, tests |
 
-```
-0 = TRANS2QUIK_SUCCESS
-1 = TRANS2QUIK_FAILED
-2 = TRANS2QUIK_QUIK_TERMINAL_NOT_FOUND
-3 = TRANS2QUIK_DLL_VERSION_NOT_SUPPORTED
-4 = TRANS2QUIK_ALREADY_CONNECTED_TO_QUIK
-5 = TRANS2QUIK_WRONG_SYNTAX
-6 = TRANS2QUIK_QUIK_NOT_CONNECTED
-7 = TRANS2QUIK_DLL_NOT_CONNECTED
-8 = TRANS2QUIK_QUIK_CONNECTED
-9 = TRANS2QUIK_QUIK_DISCONNECTED
-10 = TRANS2QUIK_DLL_CONNECTED
-11 = TRANS2QUIK_DLL_DISCONNECTED
-12 = TRANS2QUIK_MEMORY_ALLOCATION_ERROR
-13 = TRANS2QUIK_WRONG_CONNECTION_HANDLE
-14 = TRANS2QUIK_WRONG_INPUT_PARAMS
-```
+## What quik-bridge does
 
-Подобный подход используется и для вызова других методов.
+1. Reads `app.properties`.
+2. Calls `TRANS2QUIK_CONNECT` until the terminal answers. Retries on `FAILED` and `QUIK_TERMINAL_NOT_FOUND`,
+   stops with exit code 1 on `DLL_VERSION_NOT_SUPPORTED`, on an undocumented code, or when
+   `reconnect.max.attempts` runs out.
+3. Installs the connection status callback. `DLL_DISCONNECTED` (from the callback, or noticed by the
+   heartbeat polling `TRANS2QUIK_IS_DLL_CONNECTED`) starts the reconnect loop again.
+4. After each connect it calls `TRANS2QUIK_SUBSCRIBE_ORDERS` / `_TRADES` for every configured bundle, then
+   `TRANS2QUIK_START_ORDERS` / `_TRADES`. Each order and trade callback becomes an `OrderEvent` /
+   `TradeEvent` on the bus. The default sink logs them; register your own subscriber to do more.
+5. On Ctrl+C or service stop: unsubscribe, `TRANS2QUIK_DISCONNECT`, stop threads.
 
-<h3>Касаемо функций обратного вызова (callbacks)</h3>
+**About the data.** Trans2Quik delivers *your own* orders and fills plus connection status, and it sends
+transactions. It has no order book, quotes or market trades API. For market data use QLua, for example
+[quik-lua-rpc](https://github.com/Enfernuz/quik-lua-rpc) by the same upstream author.
 
-Часто терминал после обработки какого-то события может посылать нам информацию. Это может быть, например, обрыв соединения с интернетом или ответ на посланную нами асинхронную транзакцию.
-Получение такой информации реализовано через функции обратного вызова: терминал вызывает определённый метод библиотеки с определёнными аргументами, представляющими собой информацию, которую хочет передать терминал.
-Обрабатывать эту информацию можно по-разному. Для обработки функций обратного вызова необходимо переопределить их поведение с своём приложении.
-Например, мы хотим реагировать на обрыв соединения с Интернетом, логгируя это событие. Для этого в Trans2Quik есть callback под названием _TRANS2QUIK_CONNECTION_STATUS_CALLBACK_. 
-В обёртке он представлен интерфейсом ConnectionStatusCallback, наследником общего интерфейса коллбэков _StdCallCallback_.
-Каждый коллбэк имеет у себя метод _void callback(...)_ со своим набором аргументов.
-В своём коде создаём объект интерфейса ConnectionStatusCallback и переопределяем у него метод callback:
+![Architecture](docs/architecture.svg)
 
-```
-Trans2QuikLibrary.ConnectionStatusCallback connectionStatusCallback = new Trans2QuikLibrary.ConnectionStatusCallback() {
-        @Override
-        public void callback(
-            NativeLong nConnectionEvent, 
-            NativeLong nExtendedErrorCode, 
-            String lpcstrInfoMessage
-        ) {
-            Logger.getLogger(this.getClass().getName()).info(String.format("[%s]: nConnectionEvent = %d, nExtendedErrorCode = %d, lpcstrInfoMessage = %s", "ConnectionStatusCallback", nConnectionEvent.intValue(), nExtendedErrorCode.intValue(), lpcstrInfoMessage));
-            ...
-        }
-    };
+### Connection states
+
+![Connection state machine](docs/connection-states.svg)
+
+`DllConnected` triggers the setup after every successful connect, so a terminal restart gives you a fresh
+callback, fresh subscriptions and a replay of the existing orders (mode 1, last one mode 2) before new ones
+(mode 0).
+
+## Requirements
+
+- Java 11+ and Maven 3.6+ to build. Builds and tests run on any OS.
+- To run against a real terminal: Windows, a running QUIK terminal with external transactions enabled
+  (*Services → External transactions → Start*), and `TRANS2QUIK.dll` that matches the terminal version and the
+  JVM bitness (64-bit DLL for a 64-bit JVM).
+
+### Where to get TRANS2QUIK.dll
+
+The DLL is ARQA's binary and is not in this repository. It ships in the QUIK terminal folder; the API package and
+its documentation are on [ARQA's site](https://arqatech.com/ru/support/files/). Put the DLL on `PATH` or point JNA
+at its folder with `-Djna.library.path=C:\QUIK`. A DLL older or newer than the terminal returns
+`DLL_VERSION_NOT_SUPPORTED`, which is why the one from your own terminal is the right one.
+
+## Build and test
+
+```bash
+mvn verify            # compile, run the JUnit 5 suite, build jars
 ```
 
-Другой пример: реагирование на событие изменения статуса заявки
+Tests use `FakeQuikApi`, an in-memory stand-in for the DLL. No test touches `JnaQuikApi` or
+`Trans2QuikLibraryLoader`, so `TRANS2QUIK.dll` is never loaded and the suite runs on Linux and macOS (and in CI).
 
-```
-Trans2QuikLibrary.OrderStatusCallback orderStatusCallback = new Trans2QuikLibrary.OrderStatusCallback() {
-        @Override
-        public void callback(
-                            NativeLong nMode, 
-                            int dwTransID, 
-                            double dNumber,
-                            String ClassCode, 
-                            String SecCode, 
-                            double dPrice,
-                            NativeLong nBalance, 
-                            double dValue, 
-                            NativeLong nIsSell, 
-                            NativeLong nStatus,
-                            NativeLong nOrderDescriptor) {
-            Logger.getLogger(this.getClass().getName()).info(String.format("[%s]: nMode = %d, dwTransID = %d, dNumber = %f, ClassCode = %s, SecCode = %s, dPrice = %f, nBalance = %d, dValue = %f, nIsSell = %d, nStatus = %d, nOrderDescriptor = %d",
-                    "OrderStatusCallback", nMode.intValue(), dwTransID, dNumber, ClassCode, SecCode, dPrice, nBalance.intValue(), dValue, nIsSell.intValue(), nStatus.intValue(), nOrderDescriptor.intValue()));
-        }
-    };
+Outputs:
+
+- `target/JavaTrans2Quik-<version>.jar` – library jar (wrapper + quik-bridge classes)
+- `target/JavaTrans2Quik-<version>-all.jar` – runnable jar with dependencies
+
+## Run
+
+```bat
+copy app.properties.example app.properties
+rem edit quik.path and the subscriptions
+java -Djna.library.path=C:\QUIK -jar JavaTrans2Quik-2.0.0-SNAPSHOT-all.jar
+rem or with an explicit config file
+java -jar JavaTrans2Quik-2.0.0-SNAPSHOT-all.jar D:\bots\quik.properties
 ```
 
-Разумеется, логгирование -- не единственная возможная ваша реакция на событие. 
-Например, информацию _OrderStatusCallback_ можно использовать для контролирования работы бота.
+Exit codes: `0` normal stop, `1` fatal connection error, `2` configuration error, `3` DLL could not be loaded.
+Logs go to the console and `logs/quik-bridge.log` (Logback, see `src/main/resources/logback.xml`).
 
-Экземпляры обработчиков коллбэков нужно передать библиотеке Trans2Quik.dll. Для каждого коллбэка в библиотеке существует свой метод для этого. Например, для установки коллбэка на статус соединения (_ConnectionStatusCallback_) используется метод <i>TRANS2QUIK_SET_CONNECTION_STATUS_CALLBACK</i>:
+## Configuration
+
+The config file is found in this order: path given as the first argument, `-Dquikbridge.config=...`,
+`./app.properties`, `app.properties` on the classpath. It is read as UTF-8; backslashes are doubled as in any
+`.properties` file. A missing required key stops the program with exit code 2 and the key's name.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `quik.path` | required | Terminal folder (with `info.exe`). Quotes around the value are tolerated. |
+| `reconnect.interval.ms` | `1000` | Pause between connect attempts. |
+| `reconnect.max.attempts` | `0` | Attempts in a row before giving up with exit code 1. `0` = forever. |
+| `heartbeat.interval.ms` | `5000` | How often to poll DLL and server status. `0` = rely on the callback only. |
+| `run.duration.ms` | `0` | Stop after this long. `0` = until stopped. |
+| `subscribe.orders` | `true` | Receive the account's orders. |
+| `subscribe.trades` | `true` | Receive the account's trades (fills). |
+| `subscription.all` | `false` | One subscription for all classes. |
+| `subscription.all.sec.codes` | empty | With `subscription.all=true`: instrument filter, comma-separated; empty = all. |
+| `subscription.names` | empty | Comma-separated bundle names (used when `subscription.all=false`). |
+| `subscription.class.code.<name>` | required per bundle | Class code, e.g. `TQBR`, `SPBFUT`. Empty = all classes. |
+| `subscription.sec.codes.<name>` | empty | Instruments of the bundle, comma-separated; empty = whole class. |
+
+Bundles with the same class code are merged into one subscribe call (the DLL subscribes per class). Example:
+
+```properties
+quik.path=C:\\QUIK
+subscription.names=shares,futures
+subscription.class.code.shares=TQBR
+subscription.sec.codes.shares=LKOH,GAZP,SBER
+subscription.class.code.futures=SPBFUT
+```
+
+Full example: [`app.properties.example`](app.properties.example).
+
+## Using it from code
+
+```java
+BridgeConfig config = BridgeConfig.load("app.properties");
+List<Subscription> plan = new SubscriptionPlanner(config).plan();
+
+QuikBridge bridge = new QuikBridge(config, plan, new JnaQuikApi(), new SimpleEventBus(),
+        QuikBridge::namedSingleThread, Sleeper.SYSTEM)
+    .with(new Subscriber() {
+        public Set<Class<? extends Event<?>>> supports() { return Set.of(OrderEvent.class, TradeEvent.class); }
+        public void handle(Event<?> e) { /* runs on the DLL callback thread: hand off, return fast */ }
+    });
+
+Runtime.getRuntime().addShutdownHook(new Thread(bridge::stop));
+bridge.start();
+```
+
+Swap `JnaQuikApi` for your own `QuikApi` implementation to test strategies without a terminal.
+
+## Project layout
 
 ```
-retcode = quikAdapter.TRANS2QUIK_SET_CONNECTION_STATUS_CALLBACK(connectionStatusCallback, errorCode, buffer, buffer.length;
+src/main/java/org/jtrans2quik/            upstream JNA wrapper (Enfernuz)
+src/main/java/io/github/soloyes/quikbridge/
+  api/            QuikApi, Status, CallResult, OrderUpdate, TradeUpdate, CStrings
+  jna/            JnaQuikApi: QuikApi over the wrapper
+  bus/            Event, Subscriber, EventBus, SimpleEventBus
+  events/         ConnectRequested, DllConnected, ConnectionStatusChanged, OrderEvent, TradeEvent
+  connection/     Connector, ConnectionState, Heartbeat, Sleeper
+  subscribers/    ConnectionSubscriber, CallbackSubscriber, OrderSubscriber, OrderTradeLogger
+  subscription/   Subscription, SubscriptionPlanner
+  config/         BridgeConfig
+  QuikBridge, QuikBridgeApp
+src/test/java/    JUnit 5 suite with FakeQuikApi
+docs/             diagrams, Russian guide to the raw wrapper
 ```
 
-Вообще говоря, реализовывать и устанавливать коллбэки -- дело сугубо личное, определяемое исходя из списка событий, которые вам интересны.
+## Low-level wrapper usage
 
-Подводя итог: результаты некоторых событий, происходящих в терминале, -- обработки транзакций, изменения статуса заявок и многое другое (см. "6 Работа с др приложениями.pdf") -- получаются посредством коллбэков.
+The upstream Russian guide to calling Trans2Quik.dll directly through the wrapper (connect, send a
+transaction, callbacks, return codes) is kept in [docs/WRAPPER_RU.md](docs/WRAPPER_RU.md).
 
-<h3>Как получать информацию из Quik в Java?</h3>
+## Кратко по-русски
 
-Я знаю как минимум два способа:
+Форк [Enfernuz/JavaTrans2Quik](https://github.com/Enfernuz/JavaTrans2Quik): JNA-обёртка над Trans2Quik.dll
+(API транзакций терминала QUIK от ARQA). Обёртку написал Арсентий Нерушев, она осталась почти без изменений.
+В форке добавлен сервис **quik-bridge**:
 
-1. Установить на стороне QUIK RPC-сервис (сервис вызова удалённых процедур): <br/>
-    https://github.com/Enfernuz/quik-lua-rpc
+- подключается к терминалу и переподключается при обрыве (коллбэк статуса плюс периодическая проверка);
+- подписывается на заявки и сделки своего счёта по списку классов и бумаг из `app.properties`
+  и публикует их как события `OrderEvent` / `TradeEvent`;
+- корректно завершает работу: отписка, `TRANS2QUIK_DISCONNECT`, остановка потоков;
+- покрыт тестами на подставной реализации DLL, поэтому собирается и тестируется на любой ОС.
 
-    Java-клиент к нему: https://github.com/Enfernuz/quik-lua-rpc-java-client
-    
-    Реализует все методы API QLua, поэтому умеет также и в отправку транзакций (метод QLua `sendTransaction`). В сущности, при использовании `quik-lua-rpc` вам уже не нужен `JavaTrans2Quik`.
+Стакана и котировок в Trans2Quik нет: это API для транзакций, своих заявок и сделок. Рыночные данные
+берите через QLua, например [quik-lua-rpc](https://github.com/Enfernuz/quik-lua-rpc).
 
-2. Ещё один RPC-сервис. Проще в установке, но менее функционален: https://github.com/boscogh/quik_pipe
+`TRANS2QUIK.dll` и руководство QUIK в репозитории не лежат: это файлы ARQA. DLL есть в папке терминала,
+документация на [сайте ARQA](https://arqatech.com/ru/support/files/). Как вызывать обёртку напрямую:
+[docs/WRAPPER_RU.md](docs/WRAPPER_RU.md).
+
+## Credits and licence
+
+- JNA wrapper: Arsentii Nerushev ([Enfernuz](https://github.com/Enfernuz)), original repository
+  [Enfernuz/JavaTrans2Quik](https://github.com/Enfernuz/JavaTrans2Quik), Maven coordinates
+  `com.github.enfernuz:JavaTrans2Quik:1.0.1`.
+- quik-bridge: Vitalii Solovev ([soloyes](https://github.com/soloyes)).
+- QUIK, Trans2Quik.dll and their documentation belong to ARQA Technologies.
+
+The upstream repository has no licence file, and this fork does not invent one for the upstream code: its
+author has not stated reuse terms, so ask him before reusing the wrapper beyond what GitHub's terms allow.
+The fork has no licence file of its own yet either.
